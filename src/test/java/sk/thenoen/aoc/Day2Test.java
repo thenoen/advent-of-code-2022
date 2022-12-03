@@ -2,12 +2,15 @@ package sk.thenoen.aoc;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class Day2Test {
 
 	@Test
-	void test() {
-		new Day2().solve();
+	void part1() {
+		new Day2().solvePart1();
+	}
+
+	@Test
+	void part2() {
+		new Day2().solvePart2();
 	}
 }
