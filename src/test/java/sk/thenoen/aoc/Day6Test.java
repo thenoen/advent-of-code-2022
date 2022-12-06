@@ -59,4 +59,51 @@ class Day6Test {
 		System.out.println("Solution 1:");
 		System.out.println(solution);
 	}
+
+
+
+	@Test
+	void testPart2Sample1() {
+		Assertions.assertEquals(19, new Day6().solvePart2("mjqjpqmgbljsphdztnvjfqwrcgsmlb"));
+	}
+
+	@Test
+	void testPart2Sample2() {
+		Assertions.assertEquals(23, new Day6().solvePart2("bvwbjplbgvbhsrlpgdmjqwftvncz"));
+	}
+
+	@Test
+	void testPart2Sample3() {
+		Assertions.assertEquals(23, new Day6().solvePart2("nppdvjthqldpwncqszvftbrmjlhg"));
+	}
+
+	@Test
+	void testPart2Sample4() {
+		Assertions.assertEquals(29, new Day6().solvePart2("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"));
+	}
+
+	@Test
+	void testPart2Sample5() {
+		Assertions.assertEquals(26, new Day6().solvePart2("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"));
+	}
+
+	@Test
+	void solvePart2() throws IOException {
+
+		String input;
+
+		try (final InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("day6.input.txt")) {
+			Scanner s = new Scanner(inputStream);
+			List<String> inputLines = new ArrayList<>();
+			while (s.hasNextLine()) {
+				inputLines.add(s.nextLine());
+			}
+			input = String.join("\n", inputLines);
+		}
+
+		final long solution = new Day6().solvePart2(input);
+
+		System.out.println("Solution 2:");
+		System.out.println(solution);
+	}
 }
