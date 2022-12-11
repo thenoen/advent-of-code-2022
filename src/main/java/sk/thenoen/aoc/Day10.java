@@ -13,22 +13,12 @@ import sk.thenoen.aoc.day10.Memory;
 
 public class Day10 {
 
+	public static final int DISPLAY_WIDTH = 40;
+	public static final int DISPLAY_HEIGHT = 6;
+
 	public long solvePart1(String inputPath) throws IOException {
 		final List<String> inputLines = loadInput(inputPath);
-
-		Queue<Instruction> instructions = new LinkedList<>();
-		for (int i = 0; i < inputLines.size(); i++) {
-			final String inputLine = inputLines.get(i);
-			final String[] parts = inputLine.split(" ");
-			final String label = i + " " + inputLine;
-			if (parts[0].startsWith("noop")) {
-				instructions.add(new Instruction(label, 1, m -> {
-				}));
-			} else {
-				instructions.add(new Instruction(label, 2,
-												 m -> m.setRegisterX(m.getRegisterX() + Long.parseLong(parts[1]))));
-			}
-		}
+		Queue<Instruction> instructions = parseInstructions(inputLines);
 
 		final Memory memory = new Memory();
 		memory.setRegisterX(1);
@@ -55,9 +45,69 @@ public class Day10 {
 						   .sum();
 	}
 
-	public long solvePart2(String inputPath) throws IOException {
+	public String solvePart2(String inputPath) throws IOException {
+
 		final List<String> inputLines = loadInput(inputPath);
-		return -1;
+		Queue<Instruction> instructions = parseInstructions(inputLines);
+
+		final Memory memory = new Memory();
+		memory.setRegisterX(1);
+
+		int cycleNumber = 0;
+
+		boolean[][] display = new boolean[DISPLAY_WIDTH][DISPLAY_HEIGHT];
+
+		Instruction instruction = instructions.poll();
+		do {
+//			System.out.println("Cycle " + (cycleNumber % 40) + " (" + cycleNumber + ") : " + memory.getRegisterX());
+
+			final long matchIndex = memory.getRegisterX() - (cycleNumber % 40);
+			if (Math.abs(matchIndex) < 2) {
+				int x = cycleNumber % DISPLAY_WIDTH;
+				int y = (cycleNumber - x) / DISPLAY_WIDTH;
+				display[x][y] = true;
+			}
+
+			cycleNumber++;
+			instruction.nextCycle();
+			if (instruction.isDone(memory)) {
+				instruction = instructions.poll();
+			}
+
+
+		} while (!instructions.isEmpty());
+
+		String result = "";
+		for (int y = 0; y < DISPLAY_HEIGHT; y++) {
+			for (int x = 0; x < DISPLAY_WIDTH; x++) {
+				if (display[x][y]) {
+					result += "#";
+				} else {
+					result += ".";
+				}
+			}
+			result += "\n";
+		}
+
+		System.out.println(result);
+		return result;
+	}
+
+	private static Queue<Instruction> parseInstructions(List<String> inputLines) {
+		Queue<Instruction> instructions = new LinkedList<>();
+		for (int i = 0; i < inputLines.size(); i++) {
+			final String inputLine = inputLines.get(i);
+			final String[] parts = inputLine.split(" ");
+			final String label = i + " " + inputLine;
+			if (parts[0].startsWith("noop")) {
+				instructions.add(new Instruction(label, 1, m -> {
+				}));
+			} else {
+				instructions.add(new Instruction(label, 2,
+												 m -> m.setRegisterX(m.getRegisterX() + Long.parseLong(parts[1]))));
+			}
+		}
+		return instructions;
 	}
 
 	private List<String> loadInput(String inputPath) throws IOException {

@@ -22,6 +22,30 @@ class Day10Test {
 	}
 
 	@Test
-	void solvePart2() {
+	void testPart2() throws IOException {
+		String expectedResult = """
+				##..##..##..##..##..##..##..##..##..##..
+				###...###...###...###...###...###...###.
+				####....####....####....####....####....
+				#####.....#####.....#####.....#####.....
+				######......######......######......####
+				#######.......#######.......#######.....
+				""";
+		final String result = new Day10().solvePart2("day10.test-input.txt");
+		assertEquals(expectedResult, result);
+	}
+
+	@Test
+	void solvePart2() throws IOException {
+		String expectation = """
+				####.####.#..#..##..#....###...##..###..
+				#....#....#..#.#..#.#....#..#.#..#.#..#.
+				###..###..#..#.#....#....#..#.#..#.#..#.
+				#....#....#..#.#.##.#....###..####.###..
+				#....#....#..#.#..#.#....#....#..#.#....
+				####.#.....##...###.####.#....#..#.#....
+				""";
+		final String result = new Day10().solvePart2("day10.input.txt");
+		assertEquals(expectation, result);
 	}
 }

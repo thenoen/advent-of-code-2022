@@ -14,8 +14,8 @@ public class Memory {
 
 	@Override
 	public String toString() {
-		return "Memory{" +
-			   "registerX=" + registerX +
-			   '}';
+		return "Memory{ " +
+			   "registerX = " + registerX +
+			   " }";
 	}
 }
