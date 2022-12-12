@@ -20,8 +20,52 @@ public class Day11 {
 		final List<String> inputLines = loadInput(inputPath).stream()
 															.filter(Predicate.not(String::isEmpty))
 															.toList();
-		final int monkeyCount = inputLines.size() / 6;
+		Monkey[] monkeys = loadMonkeys(inputLines);
 
+		final int numberOfRounds = 20;
+		for (int i = 0; i < numberOfRounds; i++) {
+			for (int m = 0; m < monkeys.length; m++) {
+				monkeys[m].takeTurn();
+			}
+		}
+
+		final List<Integer> top2Monkeys = Arrays.stream(monkeys)
+												.map(Monkey::getInspectionCount)
+												.sorted(Integer::compareTo)
+												.sorted(Comparator.reverseOrder())
+												.limit(2)
+												.toList();
+
+		return top2Monkeys.get(0) * top2Monkeys.get(1);
+	}
+
+	public long solvePart2(String inputPath) throws IOException {
+
+		final List<String> inputLines = loadInput(inputPath).stream()
+															.filter(Predicate.not(String::isEmpty))
+															.toList();
+		Monkey[] monkeys = loadMonkeys(inputLines);
+
+		final int numberOfRounds = 20;
+		for (int i = 0; i < numberOfRounds; i++) {
+			for (int m = 0; m < monkeys.length; m++) {
+				monkeys[m].takeTurn2();
+			}
+		}
+
+		final List<Integer> top2Monkeys = Arrays.stream(monkeys)
+												.map(Monkey::getInspectionCount)
+												.sorted(Integer::compareTo)
+												.sorted(Comparator.reverseOrder())
+												.limit(2)
+												.toList();
+
+		return -1;
+	}
+
+	private static Monkey[] loadMonkeys(List<String> inputLines) {
+
+		final int monkeyCount = inputLines.size() / 6;
 		Monkey[] monkeys = new Monkey[monkeyCount];
 
 		for (int i = 0; i < monkeyCount; i++) {
@@ -33,7 +77,9 @@ public class Day11 {
 											   .map(Integer::valueOf)
 											   .toArray(Integer[]::new); // it would be easier to skip first N characters in line
 
-			final int testDivider = Integer.parseInt(inputLines.get(3 + i * 6).substring(21));
+			final int testLine = 3 + i * 6;
+			final String testFormula = inputLines.get(testLine);
+			final int testDivider = Integer.parseInt(testFormula.substring(21));
 
 			monkeys[i] = new Monkey(i, testDivider, itemsInput);
 		}
@@ -60,21 +106,7 @@ public class Day11 {
 			}
 			monkey.setWorryOperation(firstOperand, second, operation);
 		}
-		final int numberOfRounds = 20;
-		for (int i = 0; i < numberOfRounds; i++) {
-			for (int m = 0; m < monkeys.length; m++) {
-				monkeys[m].takeTurn();
-			}
-		}
-
-		final List<Integer> top2Monkeys = Arrays.stream(monkeys)
-												.map(Monkey::getInspectionCount)
-												.sorted(Integer::compareTo)
-												.sorted(Comparator.reverseOrder())
-												.limit(2)
-												.toList();
-
-		return top2Monkeys.get(0) * top2Monkeys.get(1);
+		return monkeys;
 	}
 
 	private static Function<Monkey, Integer> parseOperand(String operand) {
@@ -91,13 +123,6 @@ public class Day11 {
 		final String[] line = inputLines.get(lineNumber + i * 6).split(" ");
 		final String substring = line[line.length - 1];
 		return Integer.parseInt(substring);
-	}
-
-	public long solvePart2(String inputPath) throws IOException {
-
-		final List<String> inputLines = loadInput(inputPath);
-
-		return -1;
 	}
 
 	private List<String> loadInput(String inputPath) throws IOException {
@@ -136,6 +161,19 @@ public class Day11 {
 		}
 
 		public void takeTurn() {
+			while (!items.isEmpty()) {
+				final Integer newValue = inspectItem() / 3;
+				items.removeFirst();
+				if (newValue % testDivider == 0) {
+					positiveTestTarget.receiveItem(newValue);
+				} else {
+					negativeTestTarget.receiveItem(newValue);
+				}
+				inspectionCount++;
+			}
+		}
+
+		public void takeTurn2() {
 			while (!items.isEmpty()) {
 				final Integer newValue = inspectItem() / 3;
 				items.removeFirst();
