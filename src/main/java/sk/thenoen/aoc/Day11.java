@@ -2,6 +2,7 @@ package sk.thenoen.aoc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -15,7 +16,7 @@ import java.util.function.Predicate;
 
 public class Day11 {
 
-	public long solvePart1(String inputPath) throws IOException {
+	public BigInteger solvePart1(String inputPath) throws IOException {
 
 		final List<String> inputLines = loadInput(inputPath).stream()
 															.filter(Predicate.not(String::isEmpty))
@@ -29,38 +30,40 @@ public class Day11 {
 			}
 		}
 
-		final List<Integer> top2Monkeys = Arrays.stream(monkeys)
-												.map(Monkey::getInspectionCount)
-												.sorted(Integer::compareTo)
-												.sorted(Comparator.reverseOrder())
-												.limit(2)
-												.toList();
+		final List<BigInteger> top2Monkeys = Arrays.stream(monkeys)
+												   .map(Monkey::getInspectionCount)
+												   .sorted(BigInteger::compareTo)
+												   .sorted(Comparator.reverseOrder())
+												   .limit(2)
+												   .toList();
 
-		return top2Monkeys.get(0) * top2Monkeys.get(1);
+		return top2Monkeys.get(0).multiply(top2Monkeys.get(1));
 	}
 
-	public long solvePart2(String inputPath) throws IOException {
+	public BigInteger solvePart2(String inputPath, int numberOfRounds) throws IOException {
 
 		final List<String> inputLines = loadInput(inputPath).stream()
 															.filter(Predicate.not(String::isEmpty))
 															.toList();
 		Monkey[] monkeys = loadMonkeys(inputLines);
 
-		final int numberOfRounds = 20;
 		for (int i = 0; i < numberOfRounds; i++) {
+			if (i % 10 == 0) {
+				System.out.println("Round: " + i);
+			}
 			for (int m = 0; m < monkeys.length; m++) {
 				monkeys[m].takeTurn2();
 			}
 		}
 
-		final List<Integer> top2Monkeys = Arrays.stream(monkeys)
-												.map(Monkey::getInspectionCount)
-												.sorted(Integer::compareTo)
-												.sorted(Comparator.reverseOrder())
-												.limit(2)
-												.toList();
+		final List<BigInteger> top2Monkeys = Arrays.stream(monkeys)
+												   .map(Monkey::getInspectionCount)
+												   .sorted(BigInteger::compareTo)
+												   .sorted(Comparator.reverseOrder())
+												   .limit(2)
+												   .toList();
 
-		return -1;
+		return top2Monkeys.get(0).multiply(top2Monkeys.get(1));
 	}
 
 	private static Monkey[] loadMonkeys(List<String> inputLines) {
@@ -69,13 +72,13 @@ public class Day11 {
 		Monkey[] monkeys = new Monkey[monkeyCount];
 
 		for (int i = 0; i < monkeyCount; i++) {
-			final Integer[] itemsInput = Arrays.stream(inputLines.get(1 + i * 6)
-																 .replace(",", " ")
-																 .split(" "))
-											   .filter(Predicate.not(String::isEmpty))
-											   .skip(2)
-											   .map(Integer::valueOf)
-											   .toArray(Integer[]::new); // it would be easier to skip first N characters in line
+			final BigInteger[] itemsInput = Arrays.stream(inputLines.get(1 + i * 6)
+																	.replace(",", " ")
+																	.split(" "))
+												  .filter(Predicate.not(String::isEmpty))
+												  .skip(2)
+												  .map(BigInteger::new)
+												  .toArray(BigInteger[]::new); // it would be easier to skip first N characters in line
 
 			final int testLine = 3 + i * 6;
 			final String testFormula = inputLines.get(testLine);
@@ -86,8 +89,8 @@ public class Day11 {
 
 		for (int i = 0; i < monkeyCount; i++) {
 
-			final int positiveTestTarget = parseTarget(inputLines, i, 4);
-			final int negativeTestTarget = parseTarget(inputLines, i, 5);
+			final int positiveTestTarget = parseTargetMonkeyIndex(inputLines, i, 4);
+			final int negativeTestTarget = parseTargetMonkeyIndex(inputLines, i, 5);
 
 			final Monkey monkey = monkeys[i];
 			monkey.setPositiveTestTarget(monkeys[positiveTestTarget]);
@@ -96,30 +99,30 @@ public class Day11 {
 			final String operationLine = inputLines.get(2 + i * 6).substring(11);
 			final String[] operands = operationLine.split(" ");
 
-			Function<Monkey, Integer> firstOperand = parseOperand(operands[3]);
-			Function<Monkey, Integer> second = parseOperand(operands[5]);
-			BiFunction<Integer, Integer, Integer> operation;
+			Function<Monkey, BigInteger> firstOperand = parseOperand(operands[3]);
+			Function<Monkey, BigInteger> second = parseOperand(operands[5]);
+			BiFunction<BigInteger, BigInteger, BigInteger> operation;
 			if (operands[4].equals("*")) {
-				operation = (o1, o2) -> o1 * o2;
+				operation = (o1, o2) -> o1.multiply(o2);
 			} else {
-				operation = Integer::sum;
+				operation = BigInteger::add;
 			}
 			monkey.setWorryOperation(firstOperand, second, operation);
 		}
 		return monkeys;
 	}
 
-	private static Function<Monkey, Integer> parseOperand(String operand) {
-		Function<Monkey, Integer> firstOperand;
+	private static Function<Monkey, BigInteger> parseOperand(String operand) {
+		Function<Monkey, BigInteger> firstOperand;
 		if (operand.equals("old")) {
 			firstOperand = Monkey::getItemToProcess;
 		} else {
-			firstOperand = m -> Integer.parseInt(operand);
+			firstOperand = m -> new BigInteger(operand);
 		}
 		return firstOperand;
 	}
 
-	private static int parseTarget(List<String> inputLines, int i, int lineNumber) {
+	private static int parseTargetMonkeyIndex(List<String> inputLines, int i, int lineNumber) {
 		final String[] line = inputLines.get(lineNumber + i * 6).split(" ");
 		final String substring = line[line.length - 1];
 		return Integer.parseInt(substring);
@@ -139,69 +142,71 @@ public class Day11 {
 	private static class Monkey {
 
 		private int index;
-		private int testDivider;
-		Deque<Integer> items = new LinkedList<>();
+		private long testDivider;
+		Deque<BigInteger> items = new LinkedList<>();
 
 		Monkey positiveTestTarget;
 		Monkey negativeTestTarget;
 
-		//		WorryOperation worryOperation;
-		Function<Monkey, Integer> firstOperand;
-		Function<Monkey, Integer> secondOperand;
-		BiFunction<Integer, Integer, Integer> logic;
+		Function<Monkey, BigInteger> firstOperand;
+		Function<Monkey, BigInteger> secondOperand;
+		BiFunction<BigInteger, BigInteger, BigInteger> logic;
 
-		Integer inspectionCount = 0;
+		BigInteger inspectionCount = BigInteger.ZERO;
 
-		public Monkey(int index, int testDivider, Integer... items) {
+		public Monkey(int index, int testDivider, BigInteger... items) {
 			this.index = index;
 			this.testDivider = testDivider;
-			for (int item : items) {
+			for (BigInteger item : items) {
 				this.items.addLast(item);
 			}
 		}
 
 		public void takeTurn() {
 			while (!items.isEmpty()) {
-				final Integer newValue = inspectItem() / 3;
+				final BigInteger newValue = inspectItem().divide(BigInteger.valueOf(3L));
 				items.removeFirst();
-				if (newValue % testDivider == 0) {
+				if (newValue.mod(BigInteger.valueOf(testDivider)).equals(BigInteger.ZERO)) {
 					positiveTestTarget.receiveItem(newValue);
 				} else {
 					negativeTestTarget.receiveItem(newValue);
 				}
-				inspectionCount++;
+				inspectionCount = inspectionCount.add(BigInteger.ONE);
 			}
 		}
 
 		public void takeTurn2() {
 			while (!items.isEmpty()) {
-				final Integer newValue = inspectItem() / 3;
+				final BigInteger newValue = inspectItem();
+				if (newValue.compareTo(items.peekFirst()) < 0) {
+					System.out.println("error: new value is lower");
+				}
 				items.removeFirst();
-				if (newValue % testDivider == 0) {
+				if (newValue.mod(BigInteger.valueOf(testDivider)).compareTo(BigInteger.ZERO) == 0) {
 					positiveTestTarget.receiveItem(newValue);
 				} else {
 					negativeTestTarget.receiveItem(newValue);
 				}
-				inspectionCount++;
+				inspectionCount = inspectionCount.add(BigInteger.ONE);
 			}
 		}
 
-		public void setWorryOperation(Function<Monkey, Integer> firstOperand,
-									  Function<Monkey, Integer> secondOperand,
-									  BiFunction<Integer, Integer, Integer> logic) {
+		public void setWorryOperation(Function<Monkey, BigInteger> firstOperand,
+									  Function<Monkey, BigInteger> secondOperand,
+									  BiFunction<BigInteger, BigInteger, BigInteger> logic) {
 			this.firstOperand = firstOperand;
 			this.secondOperand = secondOperand;
 			this.logic = logic;
 		}
 
-		private Integer getItemToProcess() {
+		private BigInteger getItemToProcess() {
 			return items.peekFirst();
 		}
 
-		private Integer inspectItem() {
-			final Integer o1 = firstOperand.apply(this);
-			final Integer o2 = secondOperand.apply(this);
-			final Integer result = logic.apply(o1, o2);
+		private BigInteger inspectItem() {
+			final BigInteger o1 = firstOperand.apply(this);
+			final BigInteger o2 = secondOperand.apply(this);
+			final BigInteger result = logic.apply(o1, o2);
 			return result;
 		}
 
@@ -213,17 +218,17 @@ public class Day11 {
 			this.negativeTestTarget = negativeTestTarget;
 		}
 
-		public Integer getInspectionCount() {
+		public BigInteger getInspectionCount() {
 			return inspectionCount;
 		}
 
-		public void receiveItem(Integer item) {
+		public void receiveItem(BigInteger item) {
 			items.addLast(item);
 		}
 
 		@Override
 		public String toString() {
-			return "Monkey " + index + " - inspections: " + inspectionCount;
+			return "Monkey " + index + " - inspections: " + inspectionCount + " (" + items.size() + ")";
 		}
 	}
 }
