@@ -24,9 +24,21 @@ class Day11Test {
 	}
 
 	@Test
-	void testPart2() throws IOException {
+	void testPart2a() throws IOException {
+		final BigInteger solution = new Day11().solvePart2("day11.test-input.txt", 1000);
+		assertEquals(BigInteger.valueOf(27019168L), solution); // correct result
+	}
+
+	@Test
+	void testPart2b() throws IOException {
 		final BigInteger solution = new Day11().solvePart2("day11.test-input.txt", 10_000);
 		assertEquals(BigInteger.valueOf(2713310158L), solution);
+	}
+
+	@Test
+	void testPart2c() throws IOException {
+		final BigInteger solution = new Day11().solvePart2("day11.test-input.txt", 700);
+//		assertEquals(BigInteger.valueOf(2713310158L), solution);
 	}
 
 	@Test
