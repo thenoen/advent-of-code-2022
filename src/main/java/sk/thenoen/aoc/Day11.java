@@ -32,11 +32,18 @@ public class Day11 {
 		for (int i = 0; i < items.size(); i++) {
 			items.get(i).setId(i);
 		}
+		for (Monkey monkey : monkeys) {
+			monkey.takeInitialStateSnapshot();
+		}
 
 		final int numberOfRounds = 20;
 		for (int i = 0; i < numberOfRounds; i++) {
+			System.out.println("round " + i);
 			for (int m = 0; m < monkeys.length; m++) {
 				monkeys[m].takeTurn();
+				if (monkeys[m].testInitialItemState()) {
+					System.out.println("Monkey " + m + " in initial state");
+				}
 			}
 		}
 
@@ -47,11 +54,28 @@ public class Day11 {
 												   .limit(2)
 												   .toList();
 
+		//		for (Item item : items) {
+		//			System.out.println("Item " + item.getId() + " history: " + item.printHistory());
+		//		}
+
+		//		items.forEach(
+		//				item -> {
+		//					final Map<String, List<String>> groups = item.monkeyLevelCache.stream()
+		//																				  .collect(Collectors.groupingBy(s -> s.substring(0, 1)));
+		//					System.out.println(item);
+		//					groups.keySet()
+		//						  .stream()
+		//						  .forEach(key -> groups.get(key).forEach(gx -> System.out.println(gx)));
+		//				}
+		//		);
+
 		// 246 * 239 - correct
 		return top2Monkeys.get(0).multiply(top2Monkeys.get(1));
 	}
 
 	public BigInteger solvePart2(String inputPath, int numberOfRounds) throws IOException {
+
+		this.findLongestPattern("abcdefabcdef");
 
 		final List<String> inputLines = loadInput(inputPath).stream()
 															.filter(Predicate.not(String::isEmpty))
@@ -65,12 +89,24 @@ public class Day11 {
 			items.get(i).setId(i);
 		}
 
+		long testDividerProduct = 1;
+		for (Monkey monkey : monkeys) {
+			testDividerProduct *= monkey.getTestDivider();
+		}
+
 		for (int i = 0; i < numberOfRounds; i++) {
-			if (i % 10 == 0) {
-				System.out.println("Round: " + i);
-			}
+//			if (i % 100 == 0) {
+//				analyzePatterns(items, i);
+//			}
 			for (int m = 0; m < monkeys.length; m++) {
 				monkeys[m].takeTurn2();
+			}
+
+			for (Item item : items) {
+				// No fancy searching for patterns is needed.
+				// Because of math it is sufficient to apply MOD operation on each item at the end of round
+				// Not my own solution
+				item.setWorryLevel(item.getWorryLevel().mod(BigInteger.valueOf(testDividerProduct)));
 			}
 		}
 
@@ -85,6 +121,36 @@ public class Day11 {
 		//		findPatterns(historyString);
 
 		return top2Monkeys.get(0).multiply(top2Monkeys.get(1));
+	}
+
+	private void analyzePatterns(List<Item> items, int i) {
+		System.out.println("Round: " + i);
+		Map<String, List<String>> groups = items.get(0)
+												.getDivisibilityCache()
+												.stream()
+												.collect(Collectors.groupingBy(s -> s.substring(0, 1)));
+		if (groups.isEmpty()) {
+			return;
+		}
+		groups.forEach((k, v) -> String.join(" ", v));
+		final List<String> patterns = groups.values()
+											.stream()
+											.map(v -> String.join(" ", v))
+											.collect(Collectors.toList());
+		patterns.forEach(System.out::println);
+		for (String pattern : patterns) {
+			final int patternLength = findLongestPattern(pattern + " ");
+			System.out.println(pattern.substring(0, 4) + ": " + patternLength);
+		}
+		System.out.println();
+	}
+
+	private static void printMonkeyItemsStatus(Monkey[] monkeys) {
+		final String itemsStatus = Arrays.stream(monkeys)
+										 .map(Monkey::getItemsCount)
+										 .map(String::valueOf)
+										 .collect(Collectors.joining(""));
+		System.out.print(itemsStatus + " ");
 	}
 
 	private static Monkey[] loadMonkeys(List<String> inputLines) {
@@ -161,25 +227,12 @@ public class Day11 {
 		return inputLines;
 	}
 
-	private void findPatterns(String string) {
-		for (int i = 1; i < string.length() / 2; i++) {
-			final String patternA = string.substring(0, i);
-			final int nextOccurrence = string.indexOf(patternA, i);
-			if (nextOccurrence == patternA.length() * 2) {
-				System.out.println("pattern A: " + patternA);
-				final String patternB = string.substring(i, nextOccurrence);
-				System.out.println("pattern B: " + patternB);
-				System.out.println("---");
-			}
-		}
-	}
-
 	private static class Monkey {
 
 		private int index;
 		private long testDivider;
 		Deque<Item> items = new LinkedList<>();
-
+		private String initialItemState;
 		Monkey positiveTestTarget;
 		Monkey negativeTestTarget;
 
@@ -220,12 +273,18 @@ public class Day11 {
 				final Item removedItem = items.removeFirst();
 				removedItem.setWorryLevel(newValue);
 				if (newValue.mod(BigInteger.valueOf(testDivider)).compareTo(BigInteger.ZERO) == 0) {
+//					removedItem.logDivisibility(1, positiveTestTarget);
 					positiveTestTarget.receiveItem(removedItem);
 				} else {
+//					removedItem.logDivisibility(0, negativeTestTarget);
 					negativeTestTarget.receiveItem(removedItem);
 				}
 				inspectionCount = inspectionCount.add(BigInteger.ONE);
 			}
+		}
+
+		public long getTestDivider() {
+			return testDivider;
 		}
 
 		public void setWorryOperation(Function<Monkey, BigInteger> firstOperand,
@@ -272,6 +331,25 @@ public class Day11 {
 			item.addToHistory(this);
 		}
 
+		public void takeInitialStateSnapshot() {
+			initialItemState = getItemState();
+		}
+
+		private String getItemState() {
+			return this.items.stream()
+							 .map(item -> item.getId() + "")
+							 .collect(Collectors.joining(""));
+		}
+
+		public boolean testInitialItemState() {
+			final String currentItemState = getItemState();
+			return initialItemState.equals(currentItemState);
+		}
+
+		public int getItemsCount() {
+			return items.size();
+		}
+
 		@Override
 		public String toString() {
 			return "Monkey " + index + " - inspections: " + inspectionCount + " (" + items.size() + ")";
@@ -288,6 +366,8 @@ public class Day11 {
 		private String patternB;
 		private Map<Integer, BigInteger> worryLevelCache = new HashMap<>();
 		private List<String> monkeyLevelCache = new ArrayList<>();
+
+		private List<String> divisibilityCache = new ArrayList<>();
 
 		public Item(BigInteger worryLevel) {
 			this.worryLevel = worryLevel;
@@ -309,35 +389,50 @@ public class Day11 {
 			this.worryLevel = worryLevel;
 		}
 
+		public void logDivisibility(Integer isDivisible, Monkey m) {
+			divisibilityCache.add(m.getIndex() + "d" + isDivisible);
+		}
+
+		public List<String> getDivisibilityCache() {
+			return divisibilityCache;
+		}
+
+		public String printDivisibilityPattern() {
+			final String pattern = divisibilityCache.stream()
+													.collect(Collectors.joining());
+			return pattern;
+		}
+
 		public void addToHistory(Monkey monkey) {
 			this.monkeyIndexHistory.add(monkey.getIndex());
 			if (patternA == null && patternB == null) {
 				worryLevelCache.put(monkeyIndexHistory.size(), worryLevel);
-				monkeyLevelCache.add(monkey.getIndex() + " -  " + this.worryLevel);
-				findPatterns();
+				//				findPatterns();
 			} else {
 				//decrease worryLevel
 				final String printedHistory = printHistory();
 				if (printedHistory.startsWith(patternA)) {
 					worryLevel = worryLevelCache.get(patternA.length() + 1);
-					monkeyIndexHistory = monkeyIndexHistory.subList(patternA.length(), monkeyIndexHistory.size());
+					//					monkeyIndexHistory = monkeyIndexHistory.subList(patternA.length(), monkeyIndexHistory.size());
 				} else if (printedHistory.startsWith(patternB)) {
 					worryLevel = worryLevelCache.get(patternB.length());
-					monkeyIndexHistory = monkeyIndexHistory.subList(patternB.length(), monkeyIndexHistory.size());
+					//					monkeyIndexHistory = monkeyIndexHistory.subList(patternB.length(), monkeyIndexHistory.size());
+				} else {
+					//					System.out.println("doing nothing");
 				}
-
 			}
+//			monkeyLevelCache.add(monkey.getIndex() + " -  " + this.worryLevel);
 		}
 
 		private void findPatterns() {
 			final String historyString = printHistory();
 			for (int i = 1; i < historyString.length() / 2; i++) {
 				final String patternA = historyString.substring(0, i);
-				final int nextOccurrence = historyString.indexOf(patternA, i);
-				if (nextOccurrence == patternA.length() * 2) {
-					this.patternA = patternA;
-					final String patternB = historyString.substring(i, nextOccurrence);
-					this.patternB = patternB;
+				final int nextOccurrenceA = historyString.indexOf(patternA, i);
+				if (nextOccurrenceA == patternA.length() * 2) {
+					//					this.patternA = patternA;
+					final String patternB = historyString.substring(i, nextOccurrenceA);
+					//					this.patternB = patternB;
 					System.out.println(this);
 					System.out.println("pattern A: " + patternA);
 					System.out.println("pattern B: " + patternB);
@@ -362,5 +457,39 @@ public class Day11 {
 			}
 			return prefix;
 		}
+	}
+
+	private void findPatterns(String historyString) {
+		for (int i = 1; i < historyString.length() / 2; i++) {
+			final String patternA = historyString.substring(0, i);
+			final int nextOccurrenceA = historyString.indexOf(patternA, i);
+
+			String suspectedPatternB = historyString.substring(patternA.length(), nextOccurrenceA);
+			final int nextOccurrenceB = historyString.indexOf(suspectedPatternB, nextOccurrenceA);
+
+			if (nextOccurrenceB == nextOccurrenceA + patternA.length()) {
+				//					this.patternA = patternA;
+				final String patternB = historyString.substring(i, nextOccurrenceA);
+				//					this.patternB = patternB;
+				System.out.println(this);
+				System.out.println("pattern A: " + patternA);
+				System.out.println("pattern B: " + suspectedPatternB);
+				System.out.println("---");
+			}
+		}
+	}
+
+	private int findLongestPattern(String historyString) {
+		int max = 0;
+		for (int i = 1; i <= historyString.length() / 2; i++) {
+			final String patternA = historyString.substring(0, i);
+			final int nextOccurrenceA = historyString.indexOf(patternA, i - 2);
+
+			final int patternALength = patternA.length();
+			if (nextOccurrenceA == patternALength) {
+				max = Math.max(max, patternALength);
+			}
+		}
+		return max;
 	}
 }

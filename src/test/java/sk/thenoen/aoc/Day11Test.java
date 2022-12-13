@@ -38,14 +38,13 @@ class Day11Test {
 	@Test
 	void testPart2c() throws IOException {
 		final BigInteger solution = new Day11().solvePart2("day11.test-input.txt", 700);
-//		assertEquals(BigInteger.valueOf(2713310158L), solution);
+		//		assertEquals(BigInteger.valueOf(2713310158L), solution);
 	}
 
 	@Test
 	void solvePart2() throws IOException {
 		final BigInteger solution = new Day11().solvePart2("day11.input.txt", 10_000);
 		System.out.println("Solution 2: " + solution);
-		assertTrue(BigInteger.valueOf(1516178120L).compareTo(solution) < 0); // 1516178120 - too low
-		//		assertEquals(???, solution);
+		assertEquals(BigInteger.valueOf(20151213744L), solution);
 	}
 }
