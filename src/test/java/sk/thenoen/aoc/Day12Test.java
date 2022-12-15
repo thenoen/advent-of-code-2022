@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class Day12Test {
 
@@ -19,7 +18,7 @@ class Day12Test {
 	void solvePart1() throws IOException {
 		final int solution = new Day12().solvePart1("day12.input.txt");
 		System.out.println("Solution 1: " + solution);
-		//		assertEquals(?, solution);
+		assertEquals(447, solution);
 	}
 
 	@Test
@@ -31,5 +30,7 @@ class Day12Test {
 	@Test
 	void solvePart2() throws IOException {
 		final int solution = new Day12().solvePart2("day12.input.txt");
+		System.out.println("Solution 2: " + solution);
+		assertEquals(446, solution);
 	}
 }
